@@ -1,0 +1,843 @@
+#include <iostream>
+#include <string>
+#include <iomanip>
+#include <sstream>
+using namespace std;
+
+// Invalid number input
+void invalidNumber() {
+    cin.clear();
+    cin.ignore(1000, '\n');
+
+    cout << "\n";
+    cout << "=====================================================" << endl;
+    cout << "      Invalid input! Please enter numbers only." << endl;
+    cout << "=====================================================" << endl;
+    cout << "\n";
+}
+
+// Invalid Y/N input
+void invalidYesNo() {
+    cout << "\n";
+    cout << "=====================================================" << endl;
+    cout << "         Invalid input. Please enter Y or N." << endl;
+    cout << "=====================================================" << endl;
+    cout << "\n\n";
+}
+
+// Other invalid input messages
+void invalidInput(string message) {
+    cout << "\n";
+    cout << "=====================================================" << endl;
+    cout << "      " << message << endl;
+    cout << "=====================================================" << endl;
+    cout << "\n";
+}
+
+// Returning message
+void goBack(string returnMessage) {
+    cout << "\n";
+    cout << "\t " << returnMessage << "..." << endl;
+    cout << "\n";
+}
+
+// Confirmation validation
+void confirmation(char &confirm, bool &confirmed, string returnMessage) {
+    do {
+        cout << "-----------------------------------------------------" << endl;
+        cout << "\n";
+        cout << "\t Enter Y to confirm or N to return: ";
+        cin >> confirm;
+
+        if (confirm == 'Y' || confirm == 'y') {
+            confirmed = true;
+            cout << "\n";
+            cout << "              Confirmation successful!" << endl;
+            cout << "\n";
+        }
+        else if (confirm == 'N' || confirm == 'n') {
+            confirmed = false;
+            goBack(returnMessage);
+        }
+        else {
+            invalidYesNo();
+        }
+
+    } while (confirm != 'Y' && confirm != 'y' &&
+             confirm != 'N' && confirm != 'n');
+
+    cout << "-----------------------------------------------------" << endl;
+}
+
+// Invalid selection
+void invalidSelection(string selectMessage) {
+    cout << "\n";
+    cout << "=====================================================" << endl;
+    cout << "              Invalid " << selectMessage << " selection." << endl;
+    cout << "=====================================================" << endl;
+    cout << "\n";
+}
+
+
+// Return to a previous section or end the current transaction
+void returnEnd(char &confirm, bool &confirmed, string returnEndMessage) {
+    do {
+        cout << "\n";
+        cout << "   Would you like to return to " << returnEndMessage << "?" << endl;
+        cout << "   Enter Y to confirm or N to end transaction: ";
+        cin >> confirm;
+
+        if (confirm != 'Y' && confirm != 'y' &&
+            confirm != 'N' && confirm != 'n') {
+            invalidYesNo();
+        }
+
+    } while (confirm != 'Y' && confirm != 'y' &&
+             confirm != 'N' && confirm != 'n');
+
+    if (confirm == 'Y' || confirm == 'y') {
+        confirmed = true;
+        goBack("Returning to " + returnEndMessage);
+    }
+    else {
+        confirmed = false;
+        cout << "\n\t\t  Transaction ended." << endl;
+    }
+}
+
+// Senior citizen discount
+double seniorDiscount(double total, int age) {
+    if (age >= 60) {
+        return total * 0.20;
+    }
+    return 0.0;
+}
+
+//Saved booking summary
+void bookingSummary(string name, int age, string contact,
+                    string selectedMovie, string selectedRating,
+                    string selectedSchedule, int ticket,
+                    string selectedSeats[], string snackList,
+                    double ticketTotal, double discountAmount,
+                    double snackTotal, double finalTotal) {
+
+    cout << "\n";
+    cout << "=====================================================" << endl;
+    cout << "                  QINEXO RECEIPT" << endl;
+    cout << "=====================================================" << endl;
+
+    cout << "\n";
+    cout << "                 CUSTOMER DETAILS" << endl;
+    cout << "-----------------------------------------------------" << endl;
+    cout << "Customer Name: " << name << endl;
+    cout << "Age: " << age << endl;
+    cout << "Contact Number: " << contact << endl;
+
+    cout << "\n";
+    cout << "                 BOOKING SUMMARY" << endl;
+    cout << "-----------------------------------------------------" << endl;
+    cout << "Movie: " << selectedMovie << endl;
+    cout << "Rating: " << selectedRating << endl;
+    cout << "Schedule: " << selectedSchedule << endl;
+    cout << "Ticket Quantity: " << ticket << endl;
+    cout << "Selected Seats: ";
+
+    for (int i = 0; i < ticket; i++) {
+        cout << selectedSeats[i];
+        if (i < ticket - 1) {
+            cout << ", ";
+        }
+    }
+
+    cout << "\n";
+    cout << "-----------------------------------------------------" << endl;
+    cout << "                 PAYMENT SUMMARY" << endl;
+    cout << "-----------------------------------------------------" << endl;
+    cout << fixed << setprecision(2);
+    cout << "Ticket Subtotal: PHP " << ticketTotal << endl;
+    cout << "Senior Citizen Discount: PHP " << discountAmount << endl;
+    cout << "Snack Total: PHP " << snackTotal << endl;
+
+    cout << "\n";
+    cout << "                 SNACKS ORDERED" << endl;
+    cout << "-----------------------------------------------------" << endl;
+
+    if (snackList == "") {
+        cout << "No snacks ordered." << endl;
+    }
+    else {
+        cout << snackList;
+    }
+
+    cout << "-----------------------------------------------------" << endl;
+    cout << "AMOUNT TO PAY: PHP " << finalTotal << endl;
+    cout << "=====================================================" << endl;
+    cout << "\n";
+}
+
+int main() {
+
+    // Seat availability is kept outside the main loop.
+    // Booked seats remain unavailable until the program exits.
+    bool booked[3][3][20] = {};
+
+    string seats[20] = {
+        "A1", "A2", "A3", "A4", "A5",
+        "B1", "B2", "B3", "B4", "B5",
+        "C1", "C2", "C3", "C4", "C5",
+        "D1", "D2", "D3", "D4", "D5"
+    };
+
+    // Last completed booking, so it can be viewed from My Bookings.
+    bool hasBooking = false;
+    string lastName, lastContact, lastMovie, lastRating, lastSchedule;
+    string lastSeats[20];
+    string lastSnackList;
+    int lastAge = 0, lastTicket = 0;
+    double lastTicketTotal = 0.0, lastDiscountAmount = 0.0;
+    double lastSnackTotal = 0.0, lastFinalTotal = 0.0;
+
+    // Sample ticket price. Change this to your actual ticket price.
+    const double ticketPrice = 250.00;
+    int option;
+    bool running = true;
+
+    // Whole program loop: returns to the welcome screen after each menu cycle.
+    while (running) {
+    
+        // WELCOME SCREEN
+        cout << "⠀⣠⡶⠶⣦⡀⠀⠀⢠⣤⡄⠀⠀⠀⠀⢀⣤⡴⠶⠶⠶⣦⣄⡀⠀⠀⢀⣴⣤⢀⣤⡶⠶⢦⡄⠀⠀⣠⣤⡀⠀⠀⠀⠀⣀⣤⠶⠒⠒⠶⣤⡀⠀" << endl;
+        cout << "⣼⠏⠀⣿⣶⡷⠀⠀⢺⣎⣋⣀⣠⣤⠾⣿⠋⠀⠀⠀⠀⠀⠈⠛⢷⣄⢺⡱⠟⣽⠏⠀⣾⣦⣿⠀⠀⠻⣭⣋⣠⣤⣴⣾⠋⠀⠀⠀⠀⠀⠈⢻⡆" << endl;
+        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" << endl;
+        cout << "\n";
+        cout << "⠀⠀⠀⠀⠀     ⢀⣠⡴⠖⠚⠛⣶⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀" << endl;                                            
+        cout << "⠀⠀⠀     ⢠⣶⠟⠉⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀" << endl;                                               
+        cout << "⠀⠀    ⢀⣴⣿⠋⠀⠀⠀⠀⠀⢠⣿⣿⠀⢿⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀" << endl;                
+        cout << "⠀    ⢀⣾⣿⠃⠀⠀⠀⠀⠀⠀⣼⣿⢇⣀⡀⠀⣀⣀⠀⢀⣀⡀⠀⠀⠀⠀⣀⣀⠀⠀⣀⡀⠀⢀⣤⡀⠀⠀⢀⣀⣀⠀" << endl;               
+        cout << "⠀    ⣾⣿⠃⠀⠀⠀⠀⠀⢀⣾⣿⢋⣿⡿⠁⣠⣿⣿⠏⣹⣿⡗⢀⣴⡾⠋⣹⡿⢀⢾⣿⢃⡴⠟⢻⢁⣴⡾⠛⠉⣹⡷" << endl;              
+        cout << "    ⠐⣿⣿⠀⠀⠀⣠⠀⣠⣾⠟⣱⣿⡟⠁⣰⣿⠟⠁⣰⣿⠟⣰⣿⣟⡥⠟⠋⣠⠎⣾⣿⠋⠀⠀⣴⣿⠟⠁⠀⣰⣿⠇" << endl;              
+        cout << "⠀    ⠻⢿⣶⠶⠋⣠⡾⠋⠁⣰⣿⠏⢀⣼⣿⠋⠀⣼⣿⠏⢀⣿⡟⠀⠀⢀⣜⠁⢀⣿⣿⠀⢀⣸⣿⡏⠀⠀⣰⡿⠋⠀" << endl;               
+        cout << "    ⠰⢿⠩⠽⠟⠿⢷⣦⣄⣀⣿⣿⠤⡾⣿⠃⠀⠸⣿⡧⠞⠉⠿⡷⠴⠞⠹⣿⠶⠋⠙⠿⡶⠞⠉⠿⢧⠴⠾⠋⠀⠀⠀" << endl;
+        cout << "⠀⠀⠀⠀⠀⠈      ⠛⠿⠿⠿⠿⠛⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀" << endl;                                                        
+        cout << "_____________________________________________________" << endl;
+        cout << "⢹⡆⠀   ⠀⠀⠀⢈⣩⡿⡿⠡⡐⣯⠀⢰⣿⣿⣆⠀⣠⡶⠶⠾⠿⣷⣄⣹⡄⠀  ⠀   ⣀⣴⠟⠋⢹⠁⣄⠀⠀⣼⣿⣳⠀⢈⡿" << endl;
+        cout << "⠀⠛⢶⣤⣀⣀⣠⣴⠶⠛⠁⠀⢳⣾⠇⠻⣧⣄⣉⣼⠏⠀⢿⡶⠃⠀⠀⠀⠉⠛⢿⣦⣤⣤⣤⣴⠶⠛⠉⠀⠀⠀⠘⠷⠾⠃⠀⠹⢦⣥⣴⠾⠁" << endl;
+        cout << "\n\n";
+        cout << "\t  Your Movie Journey Starts Here!" << endl;
+        cout << "\n";
+
+        // MAIN MENU
+        cout << "\t __________________________________" << endl;
+        cout << "\t |                                |" << endl;
+        cout << "\t |\t        MENU              |" << endl;
+        cout << "\t |                                |" << endl;
+        cout << "\t |\t  [1] Reserve Now         |" << endl;
+        cout << "\t |\t  [2] Showtimes           |" << endl;
+        cout << "\t |\t  [3] My Bookings         |" << endl;
+        cout << "\t |\t  [4] Exit                |" << endl;
+        cout << "\t |________________________________|" << endl;
+        cout << "\n";
+        cout << "\t\t Please select one: ";
+        cin >> option;
+
+        if (cin.fail()) {
+            invalidNumber();
+            continue;
+        }
+
+        switch (option) {
+
+            // RESERVE NOW
+            case 1: {
+                cout << "\n\n";
+                cout << "-----------------------------------------------------" << endl;
+                cout << "\n";
+                cout << "\t __________________________________" << endl;
+                cout << "\t |                                |" << endl;
+                cout << "\t |           RESERVE NOW          |" << endl;
+                cout << "\t |________________________________|" << endl;
+
+                // Customer details
+                string name, contact;
+                int age = 0;
+                char confirm;
+                bool confirmed = false;
+                bool transactionCancelled = false;
+
+                while (!confirmed) {
+                    cout << "\n\n\n";
+                    cout << "\t    ————— CUSTOMER DETAILS —————" << endl;
+
+                    cout << "\nBooked by: ";
+                    getline(cin >> ws, name);
+
+                    // Age validation
+                    do {
+                        cout << "Age: ";
+                        cin >> age;
+
+                        if (cin.fail()) {
+                            invalidNumber();
+                            age = 0;
+                        }
+                        else if (age <= 0) {
+                            invalidInput("Invalid age! Age must be greater than 0.");
+                        }
+                    } while (age <= 0);
+
+                    // Contact number validation
+                    bool validContact = false;
+                    
+                    while (!validContact) {
+                        cout << "Contact number: ";
+                        cin >> contact;
+                    
+                        bool numbersOnly = true;
+                    
+                        for (int i = 0; i < contact.length(); i++) {
+                            if (contact[i] < '0' || contact[i] > '9') {
+                                numbersOnly = false;
+                                break;
+                            }
+                        }
+                    
+                        if (!numbersOnly) {
+                            invalidNumber();
+                        }
+                        else if (contact.length() != 11) {
+                            invalidInput("Contact number does not have 11 digits.");
+                        }
+                        else {
+                            validContact = true;
+                        }
+                    }
+
+                    // Age restriction notice
+                    cout << "\n";
+                    cout << "=====================================================" << endl;
+                    cout << "\n";
+                    cout << "\t\tAGE RESTRICTION NOTICE" << endl;
+                    cout << "\n";
+                    cout << "      Please ensure that your age and personal" << endl;
+                    cout << "             information are accurate." << endl;
+                    cout << "        Valid identification may be required" << endl;
+                    cout << "            when claiming your tickets." << endl;
+                    cout << "\n";
+                    cout << "=====================================================" << endl;
+                    cout << "\n";
+
+                    confirmation(confirm, confirmed, "Returning to customer details");
+                }
+
+                // Movie details
+                int movie = 0;
+                string selectedMovie;
+                string movie1 = "How to Lose a Guy in 10 Days";
+                string movie2 = "10 Things I Hate About You";
+                string movie3 = "The Notebook";
+                string selectedRating;
+                string movierate1 = "R-13";
+                string movierate2 = "R-13";
+                string movierate3 = "R-18";
+                int sched = 0;
+                string selectedSchedule;
+                char confirm2, confirm3, confirm4;
+                bool confirmed2 = false;
+                bool confirmed3 = false;
+                bool confirmed4 = false;
+
+                cout << "\n\n";
+                cout << "\t   ————— RESERVATION DETAILS ————— " << endl;
+
+                // MOVIE SELECTION
+                while (!confirmed2 && !transactionCancelled) {
+                    cout << "\n";
+                    cout << "  ________________________________________________" << endl;
+                    cout << "  |                                              |" << endl;
+                    cout << "  |\t    Movies currently screening:          |" << endl;
+                    cout << "  |                                              |" << endl;
+                    cout << "  |   [1] " << movie1 << " [" << movierate1 << "]    |" << endl;
+                    cout << "  |   [2] " << movie2 << " [" << movierate2 << "]      |" << endl;
+                    cout << "  |   [3] " << movie3 << " [" << movierate3 << "]                    |" << endl;
+                    cout << "  |______________________________________________|" << endl;
+                    cout << "\n";
+
+                    cout << "\t    Please enter movie number: ";
+                    cin >> movie;
+
+                    if (cin.fail()) {
+                        invalidNumber();
+                        continue;
+                    }
+
+                    switch (movie) {
+                        case 1:
+                            selectedMovie = movie1;
+                            selectedRating = movierate1;
+                            break;
+                        case 2:
+                            selectedMovie = movie2;
+                            selectedRating = movierate2;
+                            break;
+                        case 3:
+                            selectedMovie = movie3;
+                            selectedRating = movierate3;
+                            break;
+                        default:
+                            invalidSelection("movie");
+                            continue;
+                    }
+
+                    cout << "\nYou have selected " << selectedMovie
+                         << " [" << selectedRating << "]." << endl;
+
+                    // Age restriction
+                    if ((selectedRating == "R-13" && age < 13) ||
+                        (selectedRating == "R-18" && age < 18)) {
+
+                        cout << "\n";
+                        cout << "=====================================================" << endl;
+                        cout << "  WARNING: This movie is restricted to " << selectedRating << " viewers." << endl;
+                        cout << "       You are not eligible to book this movie." << endl;
+                        cout << "=====================================================" << endl;
+                        
+                        returnEnd(confirm3, confirmed3, "movie selection");
+
+                        if (!confirmed3) {
+                            transactionCancelled = true;
+                        }
+                        continue;
+                    }
+
+                    cout << "You are eligible to proceed with this movie selection." << endl;
+                    cout << "\n";
+                    confirmation(confirm2, confirmed2, "Returning to movie selection");
+                }
+
+                if (transactionCancelled) {
+                    cout << "\n\t     Returning to the main menu..." << endl;
+                    break;
+                }
+
+                // Ticket, seat, and schedule variables
+                int ticket = 0;
+                int availableSeats = 0;
+                int count = 0;
+                bool seatFound = false;
+                string seatChoice;
+                string selectedSeats[20];
+
+                bool reservationFinished = false;
+                bool returnToMenu = false;
+
+                // SCHEDULE, TICKET, AND SEAT LOOP
+                while (!reservationFinished && !returnToMenu) {
+
+                    bool confirmed4 = false;
+
+                    // SCREENING SCHEDULES
+                    while (!confirmed4) {
+                        cout << "\n";
+                        cout << "Available screening schedule for" << endl;
+                        cout << selectedMovie << ":" << endl;
+                        cout << "\n";
+
+                        switch (movie) {
+                            case 1:
+                                cout << "[1] November 5, 2026 - 10:00 AM, Hall 1" << endl;
+                                cout << "[2] November 5, 2026 - 1:30 PM, Hall 2" << endl;
+                                cout << "[3] November 6, 2026 - 4:45 PM, Hall 3" << endl;
+                                break;
+                            case 2:
+                                cout << "[1] November 5, 2026 - 9:00 AM, Hall 1" << endl;
+                                cout << "[2] November 5, 2026 - 11:30 AM, Hall 2" << endl;
+                                cout << "[3] November 6, 2026 - 2:00 PM, Hall 3" << endl;
+                                break;
+                            case 3:
+                                cout << "[1] November 12, 2026 - 10:00 AM, Hall 1" << endl;
+                                cout << "[2] November 12, 2026 - 1:30 PM, Hall 2" << endl;
+                                cout << "[3] November 13, 2026 - 4:45 PM, Hall 3" << endl;
+                                break;
+                        }
+
+                        do {
+                            cout << "\nPlease choose a screening schedule: ";
+                            cin >> sched;
+
+                            if (cin.fail()) {
+                                invalidNumber();
+                                sched = 0;
+                                continue;
+                            }
+
+                            if (sched < 1 || sched > 3) {
+                                invalidSelection("schedule");
+                            }
+
+                        } while (sched < 1 || sched > 3);
+
+                        switch (movie) {
+                            case 1:
+                                switch (sched) {
+                                    case 1: selectedSchedule = "November 5, 2026 - 10:00 AM, Hall 1"; break;
+                                    case 2: selectedSchedule = "November 5, 2026 - 1:30 PM, Hall 2"; break;
+                                    case 3: selectedSchedule = "November 6, 2026 - 4:45 PM, Hall 3"; break;
+                                }
+                                break;
+                            case 2:
+                                switch (sched) {
+                                    case 1: selectedSchedule = "November 5, 2026 - 9:00 AM, Hall 1"; break;
+                                    case 2: selectedSchedule = "November 5, 2026 - 11:30 AM, Hall 2"; break;
+                                    case 3: selectedSchedule = "November 6, 2026 - 2:00 PM, Hall 3"; break;
+                                }
+                                break;
+                            case 3:
+                                switch (sched) {
+                                    case 1: selectedSchedule = "November 12, 2026 - 10:00 AM, Hall 1"; break;
+                                    case 2: selectedSchedule = "November 12, 2026 - 1:30 PM, Hall 2"; break;
+                                    case 3: selectedSchedule = "November 13, 2026 - 4:45 PM, Hall 3"; break;
+                                }
+                                break;
+                        }
+
+                        cout << "\nYour selected schedule is:" << endl;
+                        cout << selectedSchedule << endl;
+                        cout << "\n";
+
+                        confirmation(confirm4, confirmed4, "Returning to schedule selection");
+                    }
+
+                    // TICKET QUANTITY AND SEAT SELECTION
+                    bool ticketConfirmed = false;
+                    bool returnToSchedule = false;
+                    
+                    while (!ticketConfirmed && !returnToSchedule) {
+                        do {
+                            cout << "\n";
+                            cout << "How many tickets would you like to purchase? ";
+                            cin >> ticket;
+                            cout << "\n";
+
+                            if (cin.fail()) {
+                                invalidNumber();
+                                ticket = 0;
+                            }
+                            else if (ticket <= 0) {
+                                invalidInput("Invalid! Ticket quantity must be greater than 0.");
+                            }
+                            else if (ticket > 20) {
+                                invalidInput("Maximum capacity per transaction is 20 seats.");
+                                ticket = 0;
+                            }
+
+                        } while (ticket <= 0);
+
+                        availableSeats = 0;
+                        for (int i = 0; i < 20; i++) {
+                            if (booked[movie - 1][sched - 1][i] == false) {
+                                availableSeats++;
+                            }
+                        }
+
+                        if (ticket > availableSeats) {
+                            if (availableSeats == 0) {
+                                cout << "\nSorry, there are no more available seats for this screening." << endl;
+                            }
+                            else {
+                                cout << "\nSorry, only " << availableSeats << " seats are available." << endl;
+                            }
+
+                            returnEnd(confirm4, confirmed4, "schedule selection");
+
+                            if (!confirmed4) {
+                                returnToMenu = true;
+                            }
+                            else {
+                                returnToSchedule = true;
+                            }
+                            break;
+                        }
+
+                        char confirm5;
+                        confirmation(confirm5, ticketConfirmed, "Returning to ticket quantity");
+
+                        if (!ticketConfirmed) {
+                            continue;
+                        }
+
+                        // AVAILABLE SEATS
+                        char confirm6;
+                        bool confirmed6;
+                        
+                        while (!confirmed6) {
+                        cout << "\n";
+                        cout << "\t\t    AVAILABLE SEATS" << endl;
+                        cout << "\n";
+                        cout << "\t SCREEN" << endl;
+                        cout << "\n";
+
+                        count = 0;
+
+                        // Temporary seat selection. Seats are marked booked only
+                        // after all requested seats have been selected.
+                        while (count < ticket) {
+                            for (int i = 0; i < 20; i++) {
+                                if (booked[movie - 1][sched - 1][i] == false) {
+                                    cout << "[" << seats[i] << "] ";
+                                }
+                                else {
+                                    cout << "[XX] ";
+                                }
+
+                                if ((i + 1) % 5 == 0) {
+                                    cout << endl;
+                                }
+                            }
+
+                            cout << "\nPlease choose seat " << count + 1 << ": ";
+                            cin >> seatChoice;
+
+                            seatFound = false;
+
+                            for (int i = 0; i < 20; i++) {
+                                bool alreadySelected = false;
+
+                                for (int j = 0; j < count; j++) {
+                                    if (selectedSeats[j] == seatChoice) {
+                                        alreadySelected = true;
+                                    }
+                                }
+
+                                if (seatChoice == seats[i] &&
+                                    booked[movie - 1][sched - 1][i] == false &&
+                                    !alreadySelected) {
+
+                                    selectedSeats[count] = seatChoice;
+                                    seatFound = true;
+                                    count++;
+
+                                    cout << "\nSeat " << seatChoice << " successfully selected!" << endl;
+                                    break;
+                                }
+                            }
+
+                            if (!seatFound) {
+                                cout << "\n";
+                                cout << "=====================================================" << endl;
+                                cout << " Invalid or unavailable seat. Please choose another." << endl;
+                                cout << "=====================================================" << endl;
+                                cout << "\n";
+                            }
+
+                            cout << "\n";
+                        }
+
+                        // Mark seats as booked after successful selection.
+                        for (int i = 0; i < ticket; i++) {
+                            for (int j = 0; j < 20; j++) {
+                                if (selectedSeats[i] == seats[j]) {
+                                    booked[movie - 1][sched - 1][j] = true;
+                                }
+                            }
+                        }
+
+                        cout << "Your selected seats: ";
+                        for (int i = 0; i < ticket; i++) {
+                            cout << selectedSeats[i] << " ";
+                        cout << "\n\n";
+                        
+                        confirmation(confirm6, confirmed6, "Returning to seat selection");
+                        }
+                        cout << endl;
+
+                        ticketConfirmed = true;
+                        reservationFinished = true;
+                    }
+                    }
+
+                    if (returnToSchedule) {
+                        continue;
+                    }
+
+                    if (returnToMenu) {
+                        break;
+                    }
+                }
+
+                if (returnToMenu || transactionCancelled) {
+                    cout << "\n\t     Returning to the main menu..." << endl;
+                    break;
+                }
+                
+
+                // AVAILABLE SNACKS
+                int choice = -1;
+                int quantity = 0;
+                double snackTotal = 0.0;
+                string snackList = "";
+
+                while (choice != 0) {
+                    cout << "\n";
+                    cout << "\t\t   AVAILABLE SNACKS" << endl;
+                    cout << "\n";
+                    cout << "   [1] Popcorn                         PHP 120.00" << endl;
+                    cout << "   [2] Nachos                          PHP 100.00" << endl;
+                    cout << "   [3] Hotdog                          PHP  80.00" << endl;
+                    cout << "   [4] Soda                            PHP  60.00" << endl;
+                    cout << "   [0] Done ordering" << endl;
+                    cout << "\n";
+
+                    cout << "Please select a snack: ";
+                    cin >> choice;
+
+                    if (cin.fail()) {
+                        invalidNumber();
+                        choice = -1;
+                        continue;
+                    }
+
+                    if (choice == 0) {
+                        break;
+                    }
+
+                    double snackPrice = 0.0;
+                    string snackName;
+
+                    switch (choice) {
+                        case 1: snackName = "Popcorn"; snackPrice = 120.00; break;
+                        case 2: snackName = "Nachos"; snackPrice = 100.00; break;
+                        case 3: snackName = "Hotdog"; snackPrice = 80.00; break;
+                        case 4: snackName = "Soda"; snackPrice = 60.00; break;
+                        default:
+                            invalidSelection("snack");
+                            continue;
+                    }
+
+                    do {
+                        cout << "Enter quantity for " << snackName << ": ";
+                        cin >> quantity;
+
+                        if (cin.fail()) {
+                            invalidNumber();
+                            quantity = 0;
+                        }
+                        else if (quantity <= 0) {
+                            invalidInput("    Quantity must be greater than 0.");
+                        }
+
+                    } while (quantity <= 0);
+
+                    double itemTotal = snackPrice * quantity;
+                    snackTotal += itemTotal;
+
+                    ostringstream snackLine;
+                    snackLine << snackName << " x" << quantity
+                              << " - PHP " << fixed << setprecision(2)
+                              << itemTotal << "\n";
+                    snackList += snackLine.str();
+
+                    cout << "\n" << snackName << " added to your order!" << endl;
+                    cout << "\n\n";
+                }
+
+                // PAYMENT CALCULATION
+                double ticketTotal = ticket * ticketPrice;
+                double discountAmount = seniorDiscount(ticketTotal, age);
+                double finalTotal = ticketTotal - discountAmount + snackTotal;
+
+                // SAVE LAST COMPLETED BOOKING FOR MY BOOKINGS
+                lastName = name;
+                lastAge = age;
+                lastContact = contact;
+                lastMovie = selectedMovie;
+                lastRating = selectedRating;
+                lastSchedule = selectedSchedule;
+                lastTicket = ticket;
+                lastSnackList = snackList;
+                lastTicketTotal = ticketTotal;
+                lastDiscountAmount = discountAmount;
+                lastSnackTotal = snackTotal;
+                lastFinalTotal = finalTotal;
+
+                for (int i = 0; i < ticket; i++) {
+                    lastSeats[i] = selectedSeats[i];
+                }
+
+                hasBooking = true;
+
+                // RECEIPT
+                cout << "\n\n\n";
+                bookingSummary(lastName, lastAge, lastContact,
+                               lastMovie, lastRating, lastSchedule,
+                               lastTicket, lastSeats, lastSnackList,
+                               lastTicketTotal, lastDiscountAmount,
+                               lastSnackTotal, lastFinalTotal);
+
+                cout << "\n\t Your transaction has been completed." << endl;
+                cout << "\n\t     Returning to the main menu..." << endl;
+                break;
+            }
+
+            // SHOWTIMES
+            case 2: {
+                cout << "\n";
+                cout << "=====================================================" << endl;
+                cout << "                      SHOWTIMES" << endl;
+                cout << "=====================================================" << endl;
+
+                cout << "\n" << "1. How to Lose a Guy in 10 Days [R-13]" << endl;
+                cout << "   [1] November 5, 2026 - 10:00 AM, Hall 1" << endl;
+                cout << "   [2] November 5, 2026 - 1:30 PM, Hall 2" << endl;
+                cout << "   [3] November 6, 2026 - 4:45 PM, Hall 3" << endl;
+
+                cout << "\n" << "2. 10 Things I Hate About You [R-13]" << endl;
+                cout << "   [1] November 5, 2026 - 9:00 AM, Hall 1" << endl;
+                cout << "   [2] November 5, 2026 - 11:30 AM, Hall 2" << endl;
+                cout << "   [3] November 6, 2026 - 2:00 PM, Hall 3" << endl;
+
+                cout << "\n" << "3. The Notebook [R-18]" << endl;
+                cout << "   [1] November 12, 2026 - 10:00 AM, Hall 1" << endl;
+                cout << "   [2] November 12, 2026 - 1:30 PM, Hall 2" << endl;
+                cout << "   [3] November 13, 2026 - 4:45 PM, Hall 3" << endl;
+
+                cout << "\n=====================================================" << endl;
+                cout << "\n\t     Returning to the main menu..." << endl;
+                break;
+            }
+
+            // MY BOOKINGS
+            case 3: {
+                if (hasBooking) {
+                    bookingSummary(lastName, lastAge, lastContact,
+                                   lastMovie, lastRating, lastSchedule,
+                                   lastTicket, lastSeats, lastSnackList,
+                                   lastTicketTotal, lastDiscountAmount,
+                                   lastSnackTotal, lastFinalTotal);
+                }
+                else {
+                    cout << "\n";
+                    cout << "=====================================================" << endl;
+                    cout << "             No completed bookings yet." << endl;
+                    cout << "=====================================================" << endl;
+                }
+
+                cout << "\n\t     Returning to the main menu..." << endl;
+                break;
+            }
+
+            // EXIT
+            case 4:
+                running = false;
+                cout << "\n\t    Thank you for choosing QINEXO!" << endl;
+                break;
+
+            default:
+                invalidSelection("menu");
+                break;
+        }
+
+        cout << "\n";
+    }
+
+    return 0;
+}
